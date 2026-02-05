@@ -1,0 +1,145 @@
+
+{
+  "entities": {
+    "Room": {
+      "title": "Room",
+      "description": "Represents a SyncTube room.",
+      "type": "object",
+      "properties": {
+        "roomId": { "type": "string" },
+        "hostId": { "type": "string" },
+        "videoId": { "type": "string" },
+        "isPlaying": { "type": "boolean" },
+        "timestamp": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "isLocked": { "type": "boolean", "description": "Whether the room is locked to new entries." },
+        "isLiveDisabled": { "type": "boolean", "description": "Whether the host has disabled live reactions for the room." },
+        "queue": {
+          "type": "array",
+          "description": "The ordered list of videos to be played.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "videoId": { "type": "string" },
+              "title": { "type": "string" },
+              "thumbnail": { "type": "string" },
+              "channelTitle": { "type": "string" }
+            },
+            "required": ["videoId", "title", "thumbnail"]
+          }
+        },
+        "currentQueueIndex": {
+          "type": "number",
+          "description": "The index of the currently playing video in the queue. -1 if not playing from queue."
+        },
+        "repeat": {
+          "type": "boolean",
+          "description": "Whether the queue should repeat after finishing."
+        },
+        "userCount": {
+          "type": "number",
+          "description": "The number of users currently in the room."
+        }
+      },
+      "required": ["roomId", "hostId", "videoId", "isPlaying", "createdAt", "queue", "currentQueueIndex", "repeat", "userCount"]
+    },
+    "User": {
+      "title": "User",
+      "description": "A user within a room.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "avatar": { "type": "string" },
+        "isLive": { "type": "boolean", "description": "Whether the user is currently broadcasting their camera/mic." },
+        "isMuted": { "type": "boolean" },
+        "isVideoOff": { "type": "boolean" },
+        "canGoLive": { "type": "boolean", "description": "Whether the host has granted this specific user permission to go live." }
+      },
+      "required": ["name"]
+    },
+    "Message": {
+      "title": "Message",
+      "description": "A chat message in a room.",
+      "type": "object",
+      "properties": {
+        "user": {
+          "type": "object",
+          "properties": {
+            "uid": { "type": "string" },
+            "name": { "type": "string" },
+            "avatar": { "type": "string" }
+          },
+          "required": ["uid", "name"]
+        },
+        "text": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "replyingTo": {
+          "description": "Information about the message being replied to.",
+          "type": "object",
+          "properties": {
+            "messageId": {
+              "type": "string",
+              "description": "The ID of the message being replied to."
+            },
+            "userName": {
+              "type": "string",
+              "description": "The name of the user who sent the original message."
+            },
+            "text": {
+              "type": "string",
+              "description": "A snippet of the original message text."
+            }
+          },
+          "required": ["messageId", "userName", "text"]
+        },
+        "reactions": {
+          "type": "object",
+          "description": "Key-value store of emoji reactions, where the key is the emoji and the value is an array of user UIDs.",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "required": ["user", "text", "timestamp"]
+    },
+    "Reaction": {
+      "title": "Reaction",
+      "description": "An emoji reaction in a room.",
+      "type": "object",
+      "properties": {
+        "emoji": { "type": "string" },
+        "userId": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["emoji", "userId", "timestamp"]
+    }
+  },
+  "auth": {
+    "providers": ["anonymous"]
+  },
+  "firestore": {
+    "/rooms/{roomId}": {
+      "schema": { "$ref": "#/entities/Room" },
+      "description": "Stores documents for each SyncTube room."
+    },
+    "/rooms/{roomId}/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "Stores the users currently present in a room."
+    },
+    "/rooms/{roomId}/messages/{messageId}": {
+      "schema": { "$ref": "#/entities/Message" },
+      "description": "Stores the chat messages for a room."
+    },
+    "/rooms/{roomId}/reactions/{reactionId}": {
+      "schema": { "$ref": "#/entities/Reaction" },
+      "description": "Stores ephemeral emoji reactions for a room."
+    },
+    "/rooms/{roomId}/signals/{signalId}": {
+      "schema": { "type": "object" },
+      "description": "WebRTC signaling messages for live reactions."
+    }
+  }
+}
